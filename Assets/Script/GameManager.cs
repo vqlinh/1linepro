@@ -13,8 +13,7 @@ public class GameManager : MonoBehaviour
     [SerializeField] private List<Level> levels;
     [SerializeField] private LineRenderer LineDraw;
 
-    private Canvas canvas;
-    private GameObject finger;
+ 
     private Level currentLevel;
     private int startIndex = 0;
     private GameObject previousWave;
@@ -26,16 +25,22 @@ public class GameManager : MonoBehaviour
     private int currentId;
     private int numberHint;
     private bool isFinished;
-    private GameObject panelWin;
-    private GameObject panelShop;
+
     private Point startPoint, endPoint;
-    private TextMeshProUGUI txtNumberHint;
     private Dictionary<int, Point> points;
     private Dictionary<Vector2Int, Line> lines;
     List<Line> lineList;
     private int numberLevel;
-    private TextMeshProUGUI lv;
     private int numberSelect;
+
+    [Header("UI")]
+    public Canvas canvasWaveForm;
+    public GameObject finger;
+    public GameObject panelWin;
+    public GameObject panelShop;
+    public TextMeshProUGUI txtNumberHint;
+    public TextMeshProUGUI lv;
+
 
     private void Awake()
     {
@@ -82,15 +87,9 @@ public class GameManager : MonoBehaviour
 
     public void UiStart()
     {
-        panelWin = GameObject.Find("CompleteLevel");
-        panelShop = GameObject.Find("PanelShop");
         panelWin.SetActive(false);
         panelShop.SetActive(false);
-        finger = GameObject.Find("Finger");
         finger.SetActive(false);
-        lv = GameObject.Find("LevelNumber").GetComponent<TextMeshProUGUI>();
-        txtNumberHint = GameObject.Find("TxtNumberHint").GetComponent<TextMeshProUGUI>();
-        canvas = GameObject.Find("CanvasWaveForm").GetComponent<Canvas>();
     }
 
 
@@ -136,7 +135,7 @@ public class GameManager : MonoBehaviour
 
         for (int i = startIndex; i < endIndex; i++)
         {
-            Vector2Int line = currentLevel.Lines[i];
+            Vector2Int line = currentLevel.Lines[i]; 
             Vector3 startPosition = points[line.x].Position;
             Vector3 endPosition = points[line.y].Position;
 
@@ -145,7 +144,7 @@ public class GameManager : MonoBehaviour
             yield return null; // Có thể bỏ qua nếu không cần delay
 
             // Di chuyển đến endPosition
-            yield return finger.transform.DOMove(endPosition, 1f).SetEase(Ease.Linear).WaitForCompletion();
+            yield return finger.transform.DOMove(endPosition, 0.5f).SetEase(Ease.Linear).WaitForCompletion();
         }
 
         startIndex = endIndex;
@@ -161,9 +160,9 @@ public class GameManager : MonoBehaviour
     }
 
 
-    private void LevelStart(Level level)
+    private void LevelStart(Level level) 
     {
-        for (int i = 0; i < level.Points.Count; i++)
+        for (int i = 0; i < level.Points.Count; i++) // sinh ra các point và gán ID và tọa độ
         {
             Vector4 posData = level.Points[i];
             Vector3 spawnPos = new Vector3(posData.x, posData.y, posData.z);
@@ -181,6 +180,7 @@ public class GameManager : MonoBehaviour
             lines[reversed] = spawnLine;
             spawnLine.Init(points[normal.x].Position, points[normal.y].Position);
         }
+
         currentLevel = level;
         lv.text = (levels.IndexOf(level) + 1).ToString();
     }
@@ -351,7 +351,7 @@ public class GameManager : MonoBehaviour
             {
                 previousWave.SetActive(false);
             }
-            GameObject waveForm = Instantiate(waveFormPrefabs, canvas.transform);
+            GameObject waveForm = Instantiate(waveFormPrefabs, canvasWaveForm.transform);
             waveForm.transform.position = position;
             previousWave = waveForm;
             listWave.Add(waveForm);
