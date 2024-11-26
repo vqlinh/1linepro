@@ -1,9 +1,10 @@
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using DG.Tweening;
 using System.Linq;
 using TMPro;
+using UnityEngine.SceneManagement;
 
 public class GameManager : MonoBehaviour
 {
@@ -35,19 +36,17 @@ public class GameManager : MonoBehaviour
     private int numberLevel;
     private TextMeshProUGUI lv;
     private int numberSelect;
+
     private void Awake()
     {
-        Application.targetFrameRate = 60;
-        QualitySettings.vSyncCount = 0;
-        //PlayerPrefs.DeleteAll();
+        FrameRate();
+        UiStart();
+
         lineList = new List<Line>();
-        finger = GameObject.Find("Finger");
-        finger.SetActive(false);
+
         lineDraws = new List<GameObject>();
         listWave = new List<GameObject>();
-        lv = GameObject.Find("LevelNumber").GetComponent<TextMeshProUGUI>();
-        txtNumberHint = GameObject.Find("TxtNumberHint").GetComponent<TextMeshProUGUI>();
-        canvas = GameObject.Find("CanvasWaveForm").GetComponent<Canvas>();
+ 
         isFinished = false;
         points = new Dictionary<int, Point>();
         lines = new Dictionary<Vector2Int, Line>();
@@ -59,11 +58,39 @@ public class GameManager : MonoBehaviour
         numberHint = PlayerPrefs.GetInt("NumberHint", 5);
         Level levelStart = levels[numberSelect];
         LevelStart(levelStart);
+        UpdateHint();
+    }
+
+    #region FrameRate
+    void FrameRate()
+    {
+        int refreshRate = (int)Screen.currentResolution.refreshRateRatio.numerator;
+
+        if (refreshRate >= 120)
+        {
+            Application.targetFrameRate = 120;
+        }
+        else
+        {
+            Application.targetFrameRate = 60;
+        }
+
+        QualitySettings.vSyncCount = 0;
+
+    }
+    #endregion
+
+    public void UiStart()
+    {
         panelWin = GameObject.Find("CompleteLevel");
         panelShop = GameObject.Find("PanelShop");
         panelWin.SetActive(false);
         panelShop.SetActive(false);
-        UpdateHint();
+        finger = GameObject.Find("Finger");
+        finger.SetActive(false);
+        lv = GameObject.Find("LevelNumber").GetComponent<TextMeshProUGUI>();
+        txtNumberHint = GameObject.Find("TxtNumberHint").GetComponent<TextMeshProUGUI>();
+        canvas = GameObject.Find("CanvasWaveForm").GetComponent<Canvas>();
     }
 
 
@@ -97,30 +124,42 @@ public class GameManager : MonoBehaviour
             }
             else 
             {
-                finger.SetActive(true);
-                Sequence sequence = DOTween.Sequence();
-                finger.transform.position = currentLevel.Points[Mathf.Min(startIndex, currentLevel.Points.Count - 1)];
-                int endIndex = Mathf.Min(startIndex + 4, currentLevel.Lines.Count);
-                for (int i = startIndex; i < endIndex; i++)
-                {
-                    Vector2Int line = currentLevel.Lines[i];
-                    Vector3 startPosition = points[line.x].Position;
-                    Vector3 endPosition = points[line.y].Position;
-                    sequence.Append(finger.transform.DOMove(startPosition, 0));
-                    sequence.Append(finger.transform.DOMove(endPosition, 1f).SetEase(Ease.Linear));
-                }
-                startIndex = endIndex;
-                sequence.Append(finger.transform.DOScale(0.8f, 0.2f).SetLoops(2, LoopType.Yoyo));
-                sequence.AppendCallback(() =>
-                {
-                    finger.SetActive(false);
-                    fingerMoving = false;
-                });
-
-                if (startIndex >= currentLevel.Lines.Count) startIndex = 0;
+                StartCoroutine(MoveFingerWithHint());
             }
         }
     }
+    private IEnumerator MoveFingerWithHint()
+    {
+        finger.SetActive(true);
+        finger.transform.position = currentLevel.Points[Mathf.Min(startIndex, currentLevel.Points.Count - 1)];
+        int endIndex = Mathf.Min(startIndex + 4, currentLevel.Lines.Count);
+
+        for (int i = startIndex; i < endIndex; i++)
+        {
+            Vector2Int line = currentLevel.Lines[i];
+            Vector3 startPosition = points[line.x].Position;
+            Vector3 endPosition = points[line.y].Position;
+
+            // Di chuyển đến startPosition
+            finger.transform.position = startPosition;
+            yield return null; // Có thể bỏ qua nếu không cần delay
+
+            // Di chuyển đến endPosition
+            yield return finger.transform.DOMove(endPosition, 1f).SetEase(Ease.Linear).WaitForCompletion();
+        }
+
+        startIndex = endIndex;
+
+        // Hiệu ứng scale
+        yield return finger.transform.DOScale(0.8f, 0.2f).SetLoops(2, LoopType.Yoyo).WaitForCompletion();
+
+        finger.SetActive(false);
+        fingerMoving = false;
+
+        if (startIndex >= currentLevel.Lines.Count)
+            startIndex = 0;
+    }
+
 
     private void LevelStart(Level level)
     {
@@ -167,6 +206,7 @@ public class GameManager : MonoBehaviour
 
     public void Replay()
     {
+        //SceneManager.LoadScene("GamePlay");
         if (!isFinished)
         {
             AudioManager.Instance.AudioButtonClick();
