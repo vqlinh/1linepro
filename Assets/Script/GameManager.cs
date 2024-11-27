@@ -5,7 +5,6 @@ using DG.Tweening;
 using System.Linq;
 using TMPro;
 using UnityEngine.SceneManagement;
-
 public class GameManager : MonoBehaviour
 {
     [SerializeField] private Line linePrefab;
@@ -13,7 +12,7 @@ public class GameManager : MonoBehaviour
     [SerializeField] private List<Level> levels;
     [SerializeField] private LineRenderer LineDraw;
 
- 
+
     private Level currentLevel;
     private int startIndex = 0;
     private GameObject previousWave;
@@ -41,7 +40,7 @@ public class GameManager : MonoBehaviour
     public TextMeshProUGUI txtNumberHint;
     public TextMeshProUGUI lv;
 
-
+    public Rect allowedBounds;
     private void Awake()
     {
         FrameRate();
@@ -51,7 +50,7 @@ public class GameManager : MonoBehaviour
 
         lineDraws = new List<GameObject>();
         listWave = new List<GameObject>();
- 
+
         isFinished = false;
         points = new Dictionary<int, Point>();
         lines = new Dictionary<Vector2Int, Line>();
@@ -64,6 +63,7 @@ public class GameManager : MonoBehaviour
         Level levelStart = levels[numberSelect];
         LevelStart(levelStart);
         UpdateHint();
+        allowedBounds = new Rect(-2.12f, -3.75f, 4.21f, 6.59f);
     }
 
     #region FrameRate
@@ -121,7 +121,7 @@ public class GameManager : MonoBehaviour
                 PlayerPrefs.Save();
                 panelShop.SetActive(true);
             }
-            else 
+            else
             {
                 StartCoroutine(MoveFingerWithHint());
             }
@@ -135,7 +135,7 @@ public class GameManager : MonoBehaviour
 
         for (int i = startIndex; i < endIndex; i++)
         {
-            Vector2Int line = currentLevel.Lines[i]; 
+            Vector2Int line = currentLevel.Lines[i];
             Vector3 startPosition = points[line.x].Position;
             Vector3 endPosition = points[line.y].Position;
 
@@ -160,7 +160,7 @@ public class GameManager : MonoBehaviour
     }
 
 
-    private void LevelStart(Level level) 
+    private void LevelStart(Level level)
     {
         for (int i = 0; i < level.Points.Count; i++) // sinh ra các point và gán ID và tọa độ
         {
@@ -261,21 +261,51 @@ public class GameManager : MonoBehaviour
         }
     }
 
+    private Point FindNearestPoint(Vector2 position)
+    {
+        float minDistance = float.MaxValue;
+        Point closestPoint = null;
+
+        foreach (var point in points.Values)
+        {
+            float distance = Vector2.Distance(position, point.Position);
+            if (distance < minDistance)
+            {
+                minDistance = distance;
+                closestPoint = point;
+            }
+        }
+
+        return closestPoint;
+    }
+    void OnDrawGizmos()
+    {
+        Gizmos.color = Color.green;
+        Gizmos.DrawWireCube(allowedBounds.center, allowedBounds.size);
+    }
     private void Update()
     {
         if (isFinished) return;
-
         if (Input.GetMouseButtonDown(0))
         {
             Vector3 mousePos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
             Vector2 mousePos2D = new Vector2(mousePos.x, mousePos.y);
+
+            if (!allowedBounds.Contains(mousePos2D))
+            {
+                Debug.Log("Click ngoài biên!");
+                return;
+            }
             RaycastHit2D hit = Physics2D.Raycast(mousePos2D, Vector2.zero);
-            if (!hit) return;
-            startPoint = hit.collider.gameObject.GetComponent<Point>();
-            LineDraw.gameObject.SetActive(true);
-            LineDraw.positionCount = 2;
-            LineDraw.SetPosition(0, startPoint.Position);
-            LineDraw.SetPosition(1, startPoint.Position);
+            if (hit) startPoint = hit.collider.gameObject.GetComponent<Point>();
+            else startPoint = FindNearestPoint(mousePos2D);
+            if (startPoint != null)
+            {
+                LineDraw.gameObject.SetActive(true);
+                LineDraw.positionCount = 2;
+                LineDraw.SetPosition(0, startPoint.Position);
+                LineDraw.SetPosition(1, startPoint.Position);
+            }
         }
         else if (Input.GetMouseButton(0) && startPoint != null)
         {
@@ -314,11 +344,29 @@ public class GameManager : MonoBehaviour
         }
         else if (Input.GetMouseButtonUp(0))
         {
-            LineDraw.gameObject.SetActive(false);
-            startPoint = null;
-            endPoint = null;
-            CheckToWin();
+            if (!isFinished)
+            {
+                foreach (var line in lines.Values)
+                {
+                    line.ResetLine();
+                }
+
+                LineDraw.gameObject.SetActive(false);
+                startPoint = null;
+                endPoint = null;
+                currentId = -1;
+                ClearWaveForm();
+                lineList.Clear();
+            }
+            else
+            {
+                LineDraw.gameObject.SetActive(false);
+                startPoint = null;
+                endPoint = null;
+                CheckToWin();
+            }
         }
+
     }
 
     private bool IsConnectLine()

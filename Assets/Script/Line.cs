@@ -28,7 +28,14 @@ public class Line : MonoBehaviour
     {
         filled = false;
         line.colorGradient = startColor;
-        line.sortingOrder--;
+        if (line.sortingOrder > 2)
+        {
+            line.sortingOrder--;
+        }
+        else
+        {
+            line.sortingOrder = 2;
+        }
 
     }
 
