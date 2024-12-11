@@ -33,19 +33,17 @@ public class GameManager : MonoBehaviour
     private int numberSelect;
 
     [Header("UI")]
+    public UiGame uiGame;
     public Canvas canvasWaveForm;
     public GameObject finger;
-    public GameObject panelWin;
-    public GameObject panelShop;
-    public TextMeshProUGUI txtNumberHint;
-    public TextMeshProUGUI lv;
+
+
 
     public Rect allowedBounds;
     private void Awake()
     {
         FrameRate();
-        UiStart();
-
+        finger.SetActive(false);
         lineList = new List<Line>();
 
         lineDraws = new List<GameObject>();
@@ -85,18 +83,13 @@ public class GameManager : MonoBehaviour
     }
     #endregion
 
-    public void UiStart()
-    {
-        panelWin.SetActive(false);
-        panelShop.SetActive(false);
-        finger.SetActive(false);
-    }
+
 
 
     public void UpdateHint()
     {
         numberHint = PlayerPrefs.GetInt("NumberHint", 5);
-        txtNumberHint.text = numberHint.ToString();
+        uiGame.UpdateHintText(numberHint);
     }
 
     public void Hint()
@@ -110,16 +103,16 @@ public class GameManager : MonoBehaviour
             numberHint--;
             PlayerPrefs.SetInt("NumberHint", numberHint);
             PlayerPrefs.Save();
-            txtNumberHint.text = numberHint.ToString();
+            uiGame.UpdateHintText(numberHint);
 
             if (numberHint < 0)
             {
                 numberHint = 0;
-                txtNumberHint.text = numberHint.ToString();
+                uiGame.UpdateHintText(numberHint);
 
                 PlayerPrefs.SetInt("NumberHint", numberHint);
                 PlayerPrefs.Save();
-                panelShop.SetActive(true);
+                uiGame.ShowPanelShop();     
             }
             else
             {
@@ -182,7 +175,7 @@ public class GameManager : MonoBehaviour
         }
 
         currentLevel = level;
-        lv.text = (levels.IndexOf(level) + 1).ToString();
+        uiGame.UpdateLevel(levels.IndexOf(level));  
     }
 
     public void NextLevel()
@@ -315,6 +308,7 @@ public class GameManager : MonoBehaviour
             if (hit) endPoint = hit.collider.gameObject.GetComponent<Point>();
             LineDraw.SetPosition(1, mousePos2D);
             if (startPoint == endPoint || endPoint == null) return;
+    
             if (IsConnectLine())
             {
                 currentId = endPoint.Id;
@@ -420,7 +414,7 @@ public class GameManager : MonoBehaviour
 
         AudioManager.Instance.AudioWin();
         yield return new WaitForSeconds(1f);
-        panelWin.SetActive(true);
+        uiGame.ShowPanelWin();    
     }
 
     private void CheckToWin()

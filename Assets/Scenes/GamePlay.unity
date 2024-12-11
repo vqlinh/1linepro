@@ -1315,6 +1315,7 @@ GameObject:
   m_Component:
   - component: {fileID: 720643521}
   - component: {fileID: 720643520}
+  - component: {fileID: 720643522}
   m_Layer: 0
   m_Name: GameManager
   m_TagString: Untagged
@@ -1380,12 +1381,15 @@ MonoBehaviour:
   LineDraw: {fileID: 865183414}
   waveFormPrefabs: {fileID: 1465130111948049792, guid: d5c4671e95d42e240a78a056063bf89f, type: 3}
   lineDraws: []
+  uiGame: {fileID: 720643522}
   canvasWaveForm: {fileID: 1279628153}
   finger: {fileID: 8716913201081116006}
-  panelWin: {fileID: 365788856}
-  panelShop: {fileID: 2059472850}
-  txtNumberHint: {fileID: 478870959}
-  lv: {fileID: 908128810}
+  allowedBounds:
+    serializedVersion: 2
+    x: 0
+    y: 0
+    width: 0
+    height: 0
 --- !u!4 &720643521
 Transform:
   m_ObjectHideFlags: 0
@@ -1401,6 +1405,22 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &720643522
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 720643519}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: db18482653bf3294c83f4583ecd47ab4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  panelWin: {fileID: 365788856}
+  panelShop: {fileID: 2059472850}
+  txtNumberHint: {fileID: 478870959}
+  lv: {fileID: 908128810}
 --- !u!1 &753421942
 GameObject:
   m_ObjectHideFlags: 0
